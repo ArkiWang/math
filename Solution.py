@@ -21,27 +21,9 @@ for i in range(n):
     ans = ans * x + a[i]
 
 print("1.2 ans {}".format(ans))
-
+#=======================================
 import numpy as np
-A = np.array([[31, -13, 0, 0, 0, -10, 0, 0, 0, -15],
-              [-13, 35, -9, 0, -11, 0, 0, 0, 0, 27],
-              [0, -9, 31, -10, 0, 0, 0, 0, 0, -23],
-              [0, 0, -10, 79, -30, 0, 0, 0, -9, 0],
-              [0, 0, 0, -30, 57, -7, 0, -5, 0, -20],
-              [0, 0, 0, 0, -7, 47, -30, 0, 0, 12],
-              [0, 0, 0, 0, 0, -30, 41, 0, 0, -7],
-              [0, 0, 0, 0, -5, 0, 0, 27, -2, 7],
-              [0, 0, 0, -9, 0, 0, 0, -2, 29, 10]])
-b = np.array([-15, 27, -23, 0, -20, 12, -7, 7, 10]).T
-#Gaussian
-r, c = len(A), len(A[0])
-def Gaussian(A, r, c):
-    for i in range(r):
-        for k in range(i + 1, r):
-            A[k] = A[k] - A[k][i] / A[i][i] * A[i]
-
 #print("2.1")
-#print(A)
 #backward
 def backward(A, b, r):
     x = [0] * r
@@ -61,26 +43,61 @@ def forward(A, b, r):
         x[i] = tmp / A[i][j]
     return x
 
-def get_max_abs_ii(A, r, c):
-    ans = A[r][c]
-    pos = r
-    for i in range(r+1, len(A)):
-        if abs(ans) < abs(A[i][c]):
-            ans, pos = A[i][c], i
-    return pos
-print("2.1")
-print(A)
-#Gaussian with pivot in column
-for i in range(r):
-    ex = get_max_abs_ii(A, i, i)
-    A[i], A[ex] = A[ex], A[i]
-    for k in range(i+1, r):
-        A[k] = A[k] - A[k][i]/A[i][i] * A[i]
+from copy import deepcopy
+class Matrix_Solver:
+    def __init__(self, A, b):
+        self.A = A
+        self.b = b
+        self.r = len(A)
+        self.c = len(A[0])
 
-print(A)
+    def Gaussian(self):
+        A, r = deepcopy(self.A), self.r
+        for i in range(r):
+            for k in range(i + 1, r):
+                A[k] = A[k] - A[k][i] / A[i][i] * A[i]
+        return A
+
+    def get_max_abs_ii(self, A, r, c):
+        ans = A[r][c]
+        pos = r
+        for i in range(r + 1, len(A)):
+            if abs(ans) < abs(A[i][c]):
+                ans, pos = A[i][c], i
+        return pos
+
+    def Gaussian_with_pivot(self):
+        A = deepcopy(self.A)
+        for i in range(r):
+            ex = self.get_max_abs_ii(A, i, i)
+            A[i], A[ex] = A[ex], A[i]
+            for k in range(i + 1, r):
+                A[k] = A[k] - A[k][i] / A[i][i] * A[i]
+        return A
+
+
+print("2.1")
+A = np.array([[31, -13, 0, 0, 0, -10, 0, 0, 0, -15],
+              [-13, 35, -9, 0, -11, 0, 0, 0, 0, 27],
+              [0, -9, 31, -10, 0, 0, 0, 0, 0, -23],
+              [0, 0, -10, 79, -30, 0, 0, 0, -9, 0],
+              [0, 0, 0, -30, 57, -7, 0, -5, 0, -20],
+              [0, 0, 0, 0, -7, 47, -30, 0, 0, 12],
+              [0, 0, 0, 0, 0, -30, 41, 0, 0, -7],
+              [0, 0, 0, 0, -5, 0, 0, 27, -2, 7],
+              [0, 0, 0, -9, 0, 0, 0, -2, 29, 10]])
+b = np.array([-15, 27, -23, 0, -20, 12, -7, 7, 10]).T
+r, c = len(A), len(A[0])
+mat_s = Matrix_Solver(A, b)
+A = mat_s.Gaussian()
+x = backward(A, b, r)
+print(x)
+A = mat_s.Gaussian_with_pivot()
 x = backward(A, b, r)
 print(x)
 
+#==================================
+print("2.2")
 A = np.array([[1, 2, -5, 1],
               [1, -5, 2, 7],
               [0, 2, 1, -1],
@@ -88,31 +105,70 @@ A = np.array([[1, 2, -5, 1],
 b = np.array([13, -9, 6, 0]).T
 r = len(A)
 c = len(A[0])
-print("2.2")
-print(A)
-#cholesky decompostion
+
 from cmath import sqrt
-L = np.zeros((r, c), complex)
+class decompostion:
+    def __init__(self, A):
+        self.A = A
+        self.r = len(A)
+        self.c = len(A[0])
 
-for j in range(c):
-    tmp = 0
-    for k in range(j):
-        tmp += L[j][k] ** 2
-    L[j][j] = sqrt(A[j][j] - tmp)
-    tmp = 0
-    for i in range(j+1, r):
-        for k in range(j):
-            tmp += L[i][k] * L[j][k]
-        L[i][j] = (A[j][j] - tmp) / L[j][j]
+    def cholesky(self):
+        A, r, c = self.A, self.r, self.c
+        L = np.zeros((r, c), complex)
+        for j in range(c):
+            tmp = 0
+            for k in range(j):
+                tmp += L[j][k] ** 2
+            L[j][j] = sqrt(A[j][j] - tmp)
+            tmp = 0
+            for i in range(j + 1, r):
+                for k in range(j):
+                    tmp += L[i][k] * L[j][k]
+                L[i][j] = (A[j][j] - tmp) / L[j][j]
+        return L
 
+de = decompostion(A)
+L = de.cholesky()
 print(L)
-
 y = forward(L, b, r)
 print(y)
 x = backward(L.T, y, r)
 print(x)
 
-import collections
+#============================================
+class iteration_solver:
+
+    def __init__(self, A, N):
+        D, L, U = np.zeros((N, N)), np.zeros((N, N)), np.zeros((N, N))
+        for i in range(len(A)):
+            D[i][i] = A[i][i]
+            for j in range(i):
+                L[i][j] = -A[i][j]
+            for k in range(i + 1, len(A)):
+                U[i][k] = -A[i][k]
+        self.N = N
+        self.U, self.L, self.U = D, L, U
+
+    def jacobi(self):
+        D, L, U = self.D, self.L, self.U
+        B = np.linalg.inv(D).dot(L + U)
+        f = np.linalg.inv(D).dot(b)
+        x = [0] * N
+        x = np.array(x).T
+        for i in range(10000):
+            x = np.dot(B, x) + f
+        print("jacobi", x)
+
+    def Gauss_Seidel(self):
+        D, L, U = self.D, self.L, self.U
+        B = np.linalg.inv(D - L).dot(U)
+        f = np.linalg.inv(D - L).dot(b)
+        x = [0] * N
+        x = np.array(x).T
+        for i in range(100000):
+            x = np.dot(B, x) + f
+        print("Gauss - Seidel", x)
 
 def buildMatrix(N):
     A = [[0] * N for _ in range(N)]
@@ -128,34 +184,11 @@ N = 100
 A, b = buildMatrix(N)
 print("2.7")
 print("solve", np.linalg.solve(A,b))
-#print(A)
-D, L, U = np.zeros((N, N)), np.zeros((N, N)), np.zeros((N, N))
-for i in range(len(A)):
-    D[i][i] = A[i][i]
-    for j in range(i):
-        L[i][j] = -A[i][j]
-    for k in range(i+1, len(A)):
-        U[i][k] = -A[i][k]
-#print(D, L, U)
+iter_s = iteration_solver(A, N)
+iter_s.jacobi()
+iteration_solver.Gauss_Seidel()
 
-# jacobi
-B = np.linalg.inv(D).dot(L+U)
-f = np.linalg.inv(D).dot(b)
-x = [0]*N
-x = np.array(x).T
-for i in range(10000):
-    x = np.dot(B, x) + f
-print("jacobi", x)
-
-# Gauss - Seidel
-B = np.linalg.inv(D - L).dot(U)
-f = np.linalg.inv(D - L).dot(b)
-x = [0]*N
-x = np.array(x).T
-for i in range(100000):
-    x = np.dot(B, x) + f
-print("Gauss - Seidel", x)
-
+#========================
 # binary search
 def y(x):
     return  x * np.cos(x) + 2
@@ -176,6 +209,7 @@ def binary(l, h, y):
     return mid
 print("3.2", binary(l, h, y))
 
+#===============================
 
 import matplotlib.pyplot as plt
 from sympy import *
@@ -231,7 +265,7 @@ ans, ans1, rat, rat_2, rat1, rat1_2 = solve_3_6()
 x = Symbol('x')
 res = solve(54 * x ** 6 + 45 * x ** 5 - 102 * x ** 4 - 69 * x ** 3 + 35 * x ** 2 + 16 * x - 4, x)
 #print(res)
-
+#================================
 
 class Lagrange:
     def __init__(self, f, interval, Range):
@@ -280,7 +314,7 @@ interval = 2
 Range = (-5, 5)
 lag = Lagrange(f, interval, Range)
 lag.draw_figure()
-
+#==============================
 class cubic_spline:
 
     def __init__(self, f,f_1, interval, Range):
