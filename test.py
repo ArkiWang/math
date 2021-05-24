@@ -25,9 +25,6 @@ y = x**2
 plt.plot(x, y, 'r', linewidth=2)
 plt.show()
 
-def f(x, y):
-    return 1/5 - x + x*y + x**2
-
 n = 100
 x = np.linspace(0, 1, n)
 y = [xi**2 for xi in x]

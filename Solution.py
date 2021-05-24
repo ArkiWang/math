@@ -380,6 +380,128 @@ class cubic_spline:
 
 cb = cubic_spline(f, f_1, interval, Range)
 cb.draw()
+#=================
+import matplotlib.pyplot as plt
+import math
+import random
+n = 15
+x = np.linspace(0, 1, n)
+y = x**2
+plt.plot(x, y, 'r', linewidth=2)
+plt.show()
+
+n = 100
+x = np.linspace(0, 1, n)
+y = [xi**2 for xi in x]
+lxx = sum([xi**2 for xi in x]) - n * np.mean(x)**2
+lxy = sum([x[i]*y[i] for i in range(n)]) - n * np.mean(x) * np.mean(y)
+c2 = lxy/lxx
+c1 = np.mean(y) - c2*np.mean(x)
+print("c1: {} c2: {}".format(c1, c2))
+
+#========================
+def f(x):
+    return x**2 * sin(x)
+
+a, b = -2, 2
+n = 80
+h = (b - a)/n
+x = [h*i +a for i in range(n+1)]
+
+
+def T(n, f, x:[], a, b):
+    ans = 0
+    for i in range(1, n):
+        ans += 2*f(x[i])
+    ans += f(a) + f(b)
+    ans *= (b-a)/(2*n)
+    return ans
+print(T(n, f, x, a, b))
+
+def S(n, f, x:[], a, b):
+    ans = 0
+    for i in range(1, n):
+        ans += 2*f(x[i]) + 4*f((x[i] + x[i+1])/2)
+    ans += f(a) + 4*f((x[0] + x[1])/2) + f(b)
+    ans *= (b - a)/(6*n)
+    return ans
+print(S(n, f, x, a, b))
+
+x = Symbol('x')
+print(integrate(f(x), (x, a, b)))
+
+#================================
+from cmath import exp
+import matplotlib.pyplot as plt
+
+def f(t, u):
+    return 2/t * u + t**2 * exp(t)
+
+class differential:
+    def __init__(self, h, a, b, u0):
+        self.h = h
+        self.a = a
+        self.b = b
+        self.u0 = u0
+        self.N = int((b - a) / h)
+
+    def Euler(self):
+        a, b, h, N = self.a, self.b, self.h, self.N
+        u, t = self.u0, a
+        us, ts = [u], [t]
+        for _ in range(N):
+            u = u + h * f(t, u)
+            t += h
+            us.append(u.real)
+            ts.append(t)
+        return us, ts
+
+    def improved_Euler(self):
+        a, b, h, N = self.a, self.b, self.h, self.N
+        u, t = self.u0, a
+        us, ts = [u], [t]
+        for _ in range(N):
+            u_ = u + h*f(t, u)
+            u = u + h/2*(f(t, u) + f(t+h, u_))
+            t += h
+            us.append(u)
+            ts.append(t)
+        return us, ts
+
+    def Runge_Kutta(self):
+        a, b, h, N = self.a, self.b, self.h, self.N
+        u, t = self.u0, a
+        us, ts = [u], [t]
+        for _ in range(N):
+            k1 = f(t, u)
+            k2 = f(t + 1/2 * h, u + 1/2 * h * k1)
+            k3 = f(t + 1/2 * h, u + 1/2 * h * k2)
+            k4 = f(t + h, u + h * k3)
+            u = u + h/6 * (k1 + 2*k2 + 2*k3 +k4)
+            t += h
+            us.append(u)
+            ts.append(t)
+        return us, ts
+
+    def draw(self, us: [], ts: [], tittle):
+        plt.plot(ts, us, 'b', marker='o')
+        plt.title(tittle)
+        plt.show()
+
+
+
+
+h = 0.1
+a, b = 1, 2
+u = 1
+diff = differential(h, a, b, u)
+us, ts = diff.Euler()
+diff.draw(us, ts, 'Euler')
+us, ts = diff.improved_Euler()
+diff.draw(us, ts, 'improved Euler')
+us, ts = diff.Runge_Kutta()
+diff.draw(us, ts, 'Runge_Kutta')
+
 
 
 
