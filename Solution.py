@@ -114,7 +114,7 @@ class decompostion:
         self.c = len(A[0])
 
     def cholesky(self):
-        A, r, c = self.A, self.r, self.c
+        A, r, c = deepcopy(self.A), self.r, self.c
         L = np.zeros((r, c), complex)
         for j in range(c):
             tmp = 0
@@ -128,6 +128,25 @@ class decompostion:
                 L[i][j] = (A[j][j] - tmp) / L[j][j]
         return L
 
+    def LU_decompose(self):
+        A, r, c = deepcopy(self.A), self.r, self.c
+        L, U = np.zeros((r, c)), np.zeros((r, c))
+        for i in range(r):
+            L[i][i] = 1
+        for j in range(c):
+            U[0][j] = A[0][j]
+            L[j][0] = A[j][0]/U[0][0]
+
+        for i in range(r):
+            for j in range(i, c):
+                U[i][j] = A[i][j] - sum([L[i][k]*U[k][j] for k in range(i)])
+                L[i][j] = (A[i][j] - sum(L[j][k]*U[k][i] for k in range(i)))/U[i][i]
+
+        return L, U
+
+
+
+
 de = decompostion(A)
 L = de.cholesky()
 print(L)
@@ -135,6 +154,12 @@ y = forward(L, b, r)
 print(y)
 x = backward(L.T, y, r)
 print(x)
+L, U = de.LU_decompose()
+y = forward(L, b, r)
+x = backward(U, y, r)
+print("L", L)
+print("U", U)
+print("x", x)
 
 #============================================
 class iteration_solver:
@@ -148,7 +173,7 @@ class iteration_solver:
             for k in range(i + 1, len(A)):
                 U[i][k] = -A[i][k]
         self.N = N
-        self.U, self.L, self.U = D, L, U
+        self.D, self.L, self.U = D, L, U
 
     def jacobi(self):
         D, L, U = self.D, self.L, self.U
@@ -186,10 +211,12 @@ print("2.7")
 print("solve", np.linalg.solve(A,b))
 iter_s = iteration_solver(A, N)
 iter_s.jacobi()
-iteration_solver.Gauss_Seidel()
+iter_s.Gauss_Seidel()
 
 #========================
 # binary search
+import matplotlib.pyplot as plt
+
 def y(x):
     return  x * np.cos(x) + 2
 
@@ -207,8 +234,52 @@ def binary(l, h, y):
         if y_mid * y_h < 0:
             l = mid
     return mid
-print("3.2", binary(l, h, y))
 
+ans = binary(l, h, y)
+print("3.2", ans)
+
+def f(x):
+    return x**3 + 2*x**2 + 10*x - 100
+
+def f_1(x):
+    return 3*x**2 + 4*x + 10
+
+def Newton_iter(f, f_1, N, x0, m=1):
+    x = x0
+    xs, ys = [x], [f(x)]
+    for _ in range(N):
+        x = x - m * f(x)/f_1(x)
+        xs.append(x)
+        ys.append(f(x))
+    return x, xs, ys
+
+def secant_iter(f, N, x0, x1):
+    xs, ys = [x0, x1], [f(x0), f(x1)]
+    for _ in range(N):
+        x2 = x1 - f(x1) / ((f(x1) - f(x0)) / (x1 - x0) if abs(x1 - x0) != 0 else 0.000000001)
+        x0 = x1
+        x1 = x2
+        xs.append(x2)
+        ys.append(f(x2))
+
+    return x2, xs, ys
+
+def draw(xs, ys, title):
+    plt.plot(xs, ys, 'r', marker='o', linewidth=1)
+    xs = np.linspace(0, 10, 1000)
+    ys = [f(x) for x in xs]
+    plt.plot(xs, ys, 'b')
+    plt.title(title)
+    plt.show()
+
+N = 1000
+x0, x1 = 0, 1
+ans, xs, ys = Newton_iter(f, f_1, N, x0)
+print(ans)
+draw(xs, ys, "Newton")
+ans, xs, ys = secant_iter(f, N, x0, x1)
+print(ans)
+draw(xs, ys, "Secant")
 #===============================
 
 import matplotlib.pyplot as plt
@@ -298,11 +369,9 @@ class Lagrange:
 
     def draw_figure(self):
         x = np.linspace(self.Range[0], self.Range[1], 10000)
-        print(x)
         y0 = [self.f(xi) for xi in x]
         plt.plot(x, y0, 'r')
         y1 = [self.p_n(xi) for xi in x]
-        print(y1)
         plt.plot(x, y1, 'b')
         plt.show()
 
@@ -363,18 +432,14 @@ class cubic_spline:
             b[i][0] = self.g[i+1]
         b[0][0] -= self.lambd[1]*self.f_1(self.x[0])
         b[-1][0] -= self.miu[-1]*self.f_1(self.x[-1])
-        print("A", A)
-        print("b", b)
         m = np.linalg.solve(A, b)
         return m.reshape(-1)
 
     def draw(self):
         x = np.linspace(self.Range[0], self.Range[1], 10000)
-        print(x)
         y0 = [self.f(xi) for xi in x]
         plt.plot(x, y0, 'r')
         y1 = [self.s(xi) for xi in x]
-        print(y1)
         plt.plot(x, y1, 'b')
         plt.show()
 
@@ -491,7 +556,7 @@ class differential:
 
 
 
-h = 0.1
+h = 0.01
 a, b = 1, 2
 u = 1
 diff = differential(h, a, b, u)

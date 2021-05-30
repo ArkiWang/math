@@ -79,6 +79,13 @@ def __main__():
     sum_x2, sum_xy, sum_y2 = 518600, 182943, 64572.94
     print("sigma2", calcu_sigma2_2(n, sum_x2, sum_xy, sum_y2, sum_x, sum_y))
 
+    x = [-2, -1, 0, 1, 2]
+    y = [-3.1, -0.9, 1, 3.1, 4.9]
+    lxx, lxy = calcu_lxx(x), calcu_lxy(x , y)
+    beta1 = lxy/lxx
+    beta0 = mean(y) - beta1 * mean(x)
+    print("result: beta1 {} beta0 {}".format(beta1, beta0))
+
 
 if __name__ == "__main__":
     __main__()
